@@ -1,0 +1,17 @@
+# These crop the point cloud workspace
+# (in the point cloud reference frame,
+#  i.e. the camera by default)
+crop_min_x : -0.5
+crop_min_y : -0.5
+crop_min_z : 0.2
+crop_max_x : 0.5
+crop_max_y : 0.5
+crop_max_z : 0.9
+
+# This defines the minimum distance from the plane
+# a point must have to escape RANSAC
+plane_distance_threshold : 0.01
+
+# Not used right now, will be used when outlier rejection
+# is added
+remove_outliers : false

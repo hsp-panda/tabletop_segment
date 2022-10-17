@@ -82,12 +82,12 @@ void cloud_cb (const sensor_msgs::PointCloud2& input_msg)
   PointCloudC::Ptr cropped_cloud(new PointCloudC());
 
   double min_x, min_y, min_z, max_x, max_y, max_z;
-  ros::param::param("crop_min_x", min_x, -0.5);
-  ros::param::param("crop_min_y", min_y, -0.5);
-  ros::param::param("crop_min_z", min_z, 0.2);
-  ros::param::param("crop_max_x", max_x, 0.5);
-  ros::param::param("crop_max_y", max_y, 0.5);
-  ros::param::param("crop_max_z", max_z, 0.9);
+  ros::param::param("~crop_min_x", min_x, -0.5);
+  ros::param::param("~crop_min_y", min_y, -0.5);
+  ros::param::param("~crop_min_z", min_z, 0.2);
+  ros::param::param("~crop_max_x", max_x, 0.5);
+  ros::param::param("~crop_max_y", max_y, 0.5);
+  ros::param::param("~crop_max_z", max_z, 0.9);
   Eigen::Vector4f min_pt(min_x, min_y, min_z, 1);
   Eigen::Vector4f max_pt(max_x, max_y, max_z, 1);
 
@@ -152,41 +152,50 @@ void cloud_cb (const sensor_msgs::PointCloud2& input_msg)
   {
     ROS_INFO("No plane was found");
   }
-  
+
   return;
 
 }
 
-int main (int argc, char** argv) 
+int main (int argc, char** argv)
 {
   // Initialize ROS
   ros::init (argc, argv, "tabletop_segment");
   ros::NodeHandle nh;
 
   // Create a ROS subscriber for the input point cloud
-  ros::Subscriber sub = nh.subscribe("input_cloud", 1, cloud_cb);
+  ros::Subscriber sub = nh.subscribe("~input_cloud", 1, cloud_cb);
 
   // Create a ROS publisher for the output point cloud
-  plane_pub =   nh.advertise<sensor_msgs::PointCloud2>("plane_cloud", 1, true);
-  objects_pub = nh.advertise<sensor_msgs::PointCloud2>("objects_cloud", 1, true);
-  coeff_pub =   nh.advertise<pcl_msgs::ModelCoefficients>("output_coefficients", 1, true);
+  plane_pub =   nh.advertise<sensor_msgs::PointCloud2>("~plane_cloud", 1, true);
+  objects_pub = nh.advertise<sensor_msgs::PointCloud2>("~objects_cloud", 1, true);
+  coeff_pub =   nh.advertise<pcl_msgs::ModelCoefficients>("~output_coefficients", 1, true);
+
+  // Get initialized parameters
+  bool outlier_rejection;
+  double plane_distance_threshold;
+  ros::param::param("~plane_distance_threshold", plane_distance_threshold, 0.01);
+  ros::param::param("~outlier_rejection", outlier_rejection, false);
 
   // Initialize the segmentation object
   seg.setOptimizeCoefficients(true);
   seg.setModelType(pcl::SACMODEL_PLANE);
   seg.setMethodType(pcl::SAC_RANSAC);
-  seg.setDistanceThreshold(0.01);
+  seg.setDistanceThreshold(plane_distance_threshold);
 
   // Initialize the node parameters
-  nh.setParam("crop_min_x", -0.5);
-  nh.setParam("crop_min_y", -0.5);
-  nh.setParam("crop_min_z", 0.2);
-  nh.setParam("crop_max_x", 0.5);
-  nh.setParam("crop_max_y", 0.5);
-  nh.setParam("crop_max_z", 0.9);
-  nh.setParam("plane_distance_threshold", seg.getDistanceThreshold());
+  if (!nh.hasParam("~crop_min_x"))
+  {
+    nh.setParam("~crop_min_x", -0.5);
+    nh.setParam("~crop_min_y", -0.5);
+    nh.setParam("~crop_min_z", 0.2);
+    nh.setParam("~crop_max_x", 0.5);
+    nh.setParam("~crop_max_y", 0.5);
+    nh.setParam("~crop_max_z", 0.9);
+    ROS_WARN("Crop workspace was not initialized via config file. Using default values");
+  }
 
-  // Info 
+  // Info
   ROS_INFO("Node initialized, spinning up");
 
   // Spin
