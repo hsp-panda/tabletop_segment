@@ -14,6 +14,12 @@ Parameters can be set at startup using the [config file](https://github.com/hsp-
 
 The node crops the input point cloud before detecting planes. This happens according to the workspace parameters applied around the **origin** of the point cloud. If your scene features more planes, the largest plane in the workspace will get removed, the others will stay in the output point cloud. If your scene includes more than one object, the output point cloud will include all of them. The output point cloud preserves the input header reference frame. 
 
+## Expected output 
+
+| Input PC | Segmented PC |
+| --- | --- | 
+| <img src="https://user-images.githubusercontent.com/33027628/196451293-54fa14d3-1b8c-47bd-a8ce-29a06ec6f5fb.png" width=300/> | <img src="https://user-images.githubusercontent.com/33027628/196451286-70e0042f-5790-4b35-a43e-f2883501d961.png" width=300/> |
+
 ## Topics and parameters
 
 ### Subscribes to
