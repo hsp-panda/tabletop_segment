@@ -81,6 +81,8 @@ void cloud_cb (const sensor_msgs::PointCloud2& input_msg)
   //  Crop the point cloud
   PointCloudC::Ptr cropped_cloud(new PointCloudC());
 
+  // ROS parameters are accessed via the "bare" interface because
+  // the node handle is not in scope
   double min_x, min_y, min_z, max_x, max_y, max_z;
   ros::param::param("~crop_min_x", min_x, -0.5);
   ros::param::param("~crop_min_y", min_y, -0.5);
@@ -161,21 +163,23 @@ int main (int argc, char** argv)
 {
   // Initialize ROS
   ros::init (argc, argv, "tabletop_segment");
-  ros::NodeHandle nh;
+  ros::NodeHandle nh("~");
 
   // Create a ROS subscriber for the input point cloud
-  ros::Subscriber sub = nh.subscribe("~input_cloud", 1, cloud_cb);
+  ros::Subscriber sub = nh.subscribe("input_cloud", 1, cloud_cb);
 
   // Create a ROS publisher for the output point cloud
-  plane_pub =   nh.advertise<sensor_msgs::PointCloud2>("~plane_cloud", 1, true);
-  objects_pub = nh.advertise<sensor_msgs::PointCloud2>("~objects_cloud", 1, true);
-  coeff_pub =   nh.advertise<pcl_msgs::ModelCoefficients>("~output_coefficients", 1, true);
+  plane_pub =   nh.advertise<sensor_msgs::PointCloud2>("plane_cloud", 1, true);
+  objects_pub = nh.advertise<sensor_msgs::PointCloud2>("objects_cloud", 1, true);
+  coeff_pub =   nh.advertise<pcl_msgs::ModelCoefficients>("output_coefficients", 1, true);
 
   // Get initialized parameters
   bool outlier_rejection;
   double plane_distance_threshold;
-  ros::param::param("~plane_distance_threshold", plane_distance_threshold, 0.01);
-  ros::param::param("~outlier_rejection", outlier_rejection, false);
+  nh.param<double>("plane_distance_threshold", plane_distance_threshold, 0.01);
+  nh.param<bool>("outlier_rejection", outlier_rejection, false);
+  // ros::param::param("plane_distance_threshold", plane_distance_threshold, 0.01);
+  // ros::param::param("outlier_rejection", outlier_rejection, false);
 
   // Initialize the segmentation object
   seg.setOptimizeCoefficients(true);
@@ -184,14 +188,14 @@ int main (int argc, char** argv)
   seg.setDistanceThreshold(plane_distance_threshold);
 
   // Initialize the node parameters
-  if (!nh.hasParam("~crop_min_x"))
+  if (!nh.hasParam("crop_min_x"))
   {
-    nh.setParam("~crop_min_x", -0.5);
-    nh.setParam("~crop_min_y", -0.5);
-    nh.setParam("~crop_min_z", 0.2);
-    nh.setParam("~crop_max_x", 0.5);
-    nh.setParam("~crop_max_y", 0.5);
-    nh.setParam("~crop_max_z", 0.9);
+    nh.setParam("crop_min_x", -0.5);
+    nh.setParam("crop_min_y", -0.5);
+    nh.setParam("crop_min_z", 0.2);
+    nh.setParam("crop_max_x", 0.5);
+    nh.setParam("crop_max_y", 0.5);
+    nh.setParam("crop_max_z", 0.9);
     ROS_WARN("Crop workspace was not initialized via config file. Using default values");
   }
 
